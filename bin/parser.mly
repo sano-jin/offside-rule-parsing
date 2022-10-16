@@ -10,7 +10,6 @@
 
 (* operators *)
 %token PLUS            (* '+' *)
-%token MINUS           (* '-' *)
 %token ASTERISK        (* '*' *)
 %token LT              (* '<' *)
 %token EQEQ            (* "=="  *)
@@ -45,21 +44,21 @@
 %token EOF
 
 (* Operator associativity *)
-%nonassoc COLON
-%nonassoc LT EQEQ NEQ
+%nonassoc LT EQEQ 
 %left PLUS
 %left ASTERISK
 %nonassoc LPAREN
 
 
 %start main
-%type <Syntax.stmt> main
+%type <Syntax.block> main
 
 %%
 
 (* Main part must end with EOF (End Of File) *)
 main:
   | INDENT block DEDENT EOF { $2 }
+  | block EOF { $1 }
   | TOKENS { failwith @@ "error" }
 
 
@@ -159,13 +158,13 @@ stmt:
 
 
 block:
-  | list(stmt) {List.fold_left (fun s1 s2 -> Seq (s1, s2)) Skip $1}
+  | list(stmt) {$1}
   
 
 if_elifs_else:
   (* if elif *)
   | IF exp COLON INDENT block DEDENT elifs
-   { If ($2, $5, $7) }
+   { If ($2, $5, [$7]) }
 
   (* if else *)
   | IF exp COLON INDENT block DEDENT else_
@@ -173,14 +172,14 @@ if_elifs_else:
 
   (* if *)
   | IF exp COLON INDENT block DEDENT
-   { If ($2, $5, Skip) }
+   { If ($2, $5, []) }
 ;
 
 
 elifs:
   (* elif elif *)
   | ELIF exp COLON INDENT block DEDENT elifs
-   { If ($2, $5, $7) }
+   { If ($2, $5, [$7]) }
 
   (* elif else *)
   | ELIF exp COLON INDENT block DEDENT else_
@@ -188,7 +187,7 @@ elifs:
 
   (* elif *)
   | ELIF exp COLON INDENT block DEDENT
-   { If ($2, $5, Skip) }
+   { If ($2, $5, []) }
 
 
 else_:

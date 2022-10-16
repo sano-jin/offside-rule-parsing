@@ -24,7 +24,7 @@ let token =
 
 (** parse : string -> stmt *)
 let parse_with_error filename str =
-  let lexbuf = Lexing.from_string @@ "\n" ^ str ^ "\n" in
+  let lexbuf = Lexing.from_string @@ str ^ "\n" in
   try Parser.main token lexbuf with
   | Lexing_aux.SyntaxError msg ->
       prerr_endline @@ msg ^ " in " ^ filename;

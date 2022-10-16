@@ -1,5 +1,7 @@
 (** syntax.ml *)
 
+open Util
+
 (** expression *)
 type exp =
   | Var of string  (** variable e.g. [x] *)
@@ -13,16 +15,20 @@ type exp =
   | Not of exp  (** [not e] *)
   | App of exp * exp list  (** [f (x1, ..., xn)] *)
 
-and stmt =
+type stmt =
   | Exp of exp
-  | Def of string * string list * stmt
+  | Def of string * string list * block
       (** definition e.g. [def succ(x): { return x + 1 }] *)
   | Assign of string * exp  (** assignment e.g. [x := 1 + 2 * y] *)
-  | Seq of stmt * stmt  (** sequence e.g. [x := 2; y := x + 1] *)
-  | While of exp * stmt  (** loop e.g. [while 1 < x: { x := x + 1 }] *)
-  | If of exp * stmt * stmt  (** branch e.g. [if 1 < x: { x := x + 1 }] *)
+  (*
+  | Seq of block * block  (** sequence e.g. [x := 2; y := x + 1] *)
+  *)
+  | While of exp * block  (** loop e.g. [while 1 < x: { x := x + 1 }] *)
+  | If of exp * block * block  (** branch e.g. [if 1 < x: { x := x + 1 }] *)
   | Return of exp  (** [return x + 1] *)
   | Skip  (** skip. e.g. [pass] *)
+
+and block = stmt list
 
 let rec string_of_exp = function
   | Var str -> str
@@ -39,17 +45,24 @@ let rec string_of_exp = function
       ^ String.concat ", " (List.map string_of_exp args)
       ^ ")"
 
-and string_of_stmt = function
-  | Exp e -> string_of_exp e ^ ";\n"
+let rec string_of_stmt indent =
+  let str_of block =
+    String.concat "\n" @@ List.map (string_of_stmt ("  " ^ indent)) block
+  in
+  ( ^ ) indent <. function
+  | Exp e -> string_of_exp e
   | Def (f, args, stmt) ->
-      "def " ^ f ^ " (" ^ String.concat ", " args ^ "): {" ^ string_of_stmt stmt
-      ^ "};"
+      "def " ^ f ^ " (" ^ String.concat ", " args ^ "):\n" ^ str_of stmt
   | Assign (x, e) -> x ^ " = " ^ string_of_exp e
-  | Seq (s1, s2) -> string_of_stmt s1 ^ "; " ^ string_of_stmt s2
-  | While (e, stmt) ->
-      "while " ^ string_of_exp e ^ ": {" ^ string_of_stmt stmt ^ "}"
+  (*
+  | Seq (s1, s2) -> string_of_stmt indent s1 ^ string_of_stmt indent s2
+ *)
+  | While (e, stmt) -> "while " ^ string_of_exp e ^ ":\n" ^ str_of stmt
+  | If (e, s1, []) -> "if " ^ string_of_exp e ^ ":\n" ^ str_of s1
   | If (e, s1, s2) ->
-      "if " ^ string_of_exp e ^ ": {" ^ string_of_stmt s1 ^ "} else {"
-      ^ string_of_stmt s2 ^ "}"
-  | Return e -> "return " ^ string_of_exp e ^ ";"
-  | Skip -> "pass;"
+      "if " ^ string_of_exp e ^ ":\n" ^ str_of s1 ^ "\n" ^ indent ^ "else:\n"
+      ^ str_of s2
+  | Return e -> "return " ^ string_of_exp e
+  | Skip -> "pass"
+
+let string_of_block = String.concat "\n" <. List.map @@ string_of_stmt ""

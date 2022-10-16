@@ -37,4 +37,4 @@ let emit_indent indent_level =
   else
     match emit_dedents indent_level with
     | 0 -> DELIMITER
-    | n -> TOKENS (ListExtra.repeat n DEDENT)
+    | n -> TOKENS (DELIMITER :: ListExtra.repeat n DEDENT)

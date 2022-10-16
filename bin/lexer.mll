@@ -20,7 +20,6 @@ rule token = parse
 
   (* Operators *)
   | '+'               { PLUS }
-  | '-'               { MINUS }
   | '*'               { ASTERISK }
   | '<'               { LT }
   | '='               { EQ }
@@ -87,10 +86,6 @@ and indent = parse
   (* blank line (with a comment) *)
   | space* ( newline | '#' [^ '\n']* newline )
     { Lexing.new_line lexbuf; indent lexbuf }
-
-  (* blank line (with a comment) ended by eof *)
-  | space* ( eof | '#' [^ '\n']* eof )
-    { EOF }
 
   (* indent (assuming that the next comming token is
      not a space/newline/comment) *)
